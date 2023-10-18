@@ -54,17 +54,24 @@ class Node:
         """Expand this node according to `policy`."""
         for action, p in enumerate(policy):
             if p > 0:
-                child_state = self.state.copy()
-                child_state = self.game.get_next_state(child_state, action, 1)
-                child_state = self.game.change_state_perspective(child_state, player=-1)
+                # Moved these to compute only when required
+                # child_state = self.state.copy()
+                # child_state = self.game.get_next_state(child_state, action, 1)
+                # child_state = self.game.change_state_perspective(child_state, player=-1)
                 # Action taken to get to child, from its perspective
                 child_action = self.game.change_action_perspective(action, player=-1)
 
-                child = Node(self.game, self.args, child_state,
-                             self, child_action, p)
+                child = Node(self.game, self.args, None,
+                             self, child_action, prior=p)
                 self.children.append(child)
 
         return child
+
+    def set_state_from_parent(self, parent):
+        """Set the state of this node from the parent's state."""
+        self.state = parent.state.copy()
+        self.state = self.game.change_state_perspective(self.state, player=-1)
+        self.state = self.game.get_next_state(self.state, self.action_taken, -1)
 
     def backpropagate(self, value):
         """Backpropagate this value "up the tree"."""

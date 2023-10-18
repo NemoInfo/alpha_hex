@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import random
-from node import Node
+from alpha_hex.node import Node
 
 
 class MCTS:
@@ -38,9 +38,14 @@ class MCTS:
 
         for search in range(self.args['num_searches']):
             node = root
+            parent = root
 
             while node.is_fully_expanded():
+                parent = node
                 node = node.select()
+
+            if node.state is None:
+                node.set_state_from_parent(parent)
 
             value, is_terminal = \
                 self.game.get_value_and_terminated(node.state,
@@ -65,11 +70,10 @@ class MCTS:
 
             node.backpropagate(value)
 
-            break
-
         action_probs = np.zeros(self.game.action_size)
         for child in root.children:
-            action_probs[child.action_taken] = child.visit_count
+            action = self.game.change_action_perspective(child.action_taken, player=-1)
+            action_probs[action] = child.visit_count
         action_probs /= np.sum(action_probs)
         return action_probs
 

@@ -4,7 +4,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import random
-from node import Node
+from tqdm.notebook import trange
+from alpha_hex.node import Node
+import multiprocessing
 
 
 class SPG:
@@ -14,8 +16,8 @@ class SPG:
         """Initialize SPG."""
         self.state = game.get_initial_state()
         self.memory = []
-        self.root = None
-        self.node = None
+        self.root: Node = None
+        self.node: Node = None
 
 
 class MCTSParallel:
@@ -49,9 +51,14 @@ class MCTSParallel:
             for spg in spgs:
                 spg.node = None
                 node = spg.root
+                parent = node
 
                 while node.is_fully_expanded():
+                    parent = node
                     node = node.select()
+
+                if node.state is None:
+                    node.set_state_from_parent(parent)
 
                 value, is_terminal = self.game.get_value_and_terminated(node.state, node.action_taken)
                 value = self.game.get_opponent_value(value)
@@ -88,6 +95,7 @@ class AlphaZeroParallel:
 
     def __init__(self, model, optimizer, game, args):
         """Initialize Alpha Zero."""
+        multiprocessing.set_start_method('spawn')
         self.model = model
         self.optimizer = optimizer
         self.game = game
@@ -111,7 +119,8 @@ class AlphaZeroParallel:
 
                 action_probs = np.zeros(self.game.action_size)
                 for child in spg.root.children:
-                    action_probs[child.action_taken] = child.visit_count
+                    action = self.game.change_action_perspective(child.action_taken, player=-1)
+                    action_probs[action] = child.visit_count
                 action_probs /= np.sum(action_probs)
 
                 spg.memory.append((spg.root.state, action_probs, player))
@@ -166,13 +175,38 @@ class AlphaZeroParallel:
         for iteration in range(self.args["num_iterations"]):
             memory = []
 
+            processors = self.args["num_selfPlay_processes"]
+            chunk_size = (self.args["num_selfPlay_iterations"] // self.args['num_parallel_games']) // processors
+            processes = []
+            par_memory = multiprocessing.Manager().list()
+
             self.model.eval()
-            for selfPlay_iteration in range(self.args["num_selfPlay_iterations"] // self.args['num_parallel_games']):
-                memory += self.selfPlay()
+            for i in range(processors):
+                start_index = i * chunk_size
+                end_index = start_index + chunk_size if i != processors - 1 else \
+                    (self.args["num_selfPlay_iterations"] // self.args['num_parallel_games'])
+
+                p = multiprocessing.Process(target=selfPlayWorker, args=(start_index, end_index, self))
+                processes.append(p)
+                p.start()
+
+            for i in trange(len(processes)):
+                processes[i].join()
+
+            for local_memory in par_memory:
+                for single_game in local_memory:
+                    memory += single_game
 
             self.model.train()
-            for epoch in range(self.args["num_epochs"]):
+            for epoch in trange(self.args["num_epochs"]):
                 self.train(memory)
 
-            torch.save(self.model.state_dict(), f"model_{iteration}.pt")
-            torch.save(self.optimizer.state_dict(), f"optimizer_{iteration}.pt")
+            torch.save(self.model.state_dict(), f"models/model_{iteration}_{self.args['name']}.pt")
+            torch.save(self.optimizer.state_dict(), f"models/optimizer_{iteration}_{self.args['name']}.pt")
+
+
+def selfPlayWorker(start, end, alpha: AlphaZeroParallel):
+    """Self play worker function."""
+    local_memory = []
+    for _ in range(start, end):
+        local_memory += alpha.selfPlay()
