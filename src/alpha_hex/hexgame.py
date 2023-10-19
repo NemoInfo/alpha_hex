@@ -170,12 +170,13 @@ class HexGame:
 
         return encoded_state
 
+    #TODO: Paremetrize this function
     def pretty_print_state(self, state):
         """Display the current state (nicely)."""
         no_to_symbol = {
                 -1: "O",
                 0: ".",
-                1: "X"
+                1: "#"
         }
         mid_sum = (self.col_count + self.row_count - 2) // 2
         print("            1 A")
@@ -187,7 +188,7 @@ class HexGame:
                     print(" ", end="")
                 print(f"{sum+2} ", end="")
             else:
-                print("   ", end="")
+                print(f" {no_to_symbol[1]} ", end="")
 
             for i in range(sum + 1):
                 if i >= self.row_count:
@@ -197,5 +198,7 @@ class HexGame:
                     continue
                 print(no_to_symbol[state[j, i]], end=" ")
             if sum < self.col_count - 1:
-                print(f"{chr(sum + 66)}", end="")
-            print()
+                print(f"{chr(sum + 66)}")
+            else:
+                print(no_to_symbol[-1])
+        print("            # 0")
