@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Demo of AlphaHex."""
+import os
 import numpy as np
 import torch
-from hexgame import HexGame
-from resnet import ResNet
-from alpha0 import MCTS
-import os
+from alpha_hex.hexgame import HexGame
+from alpha_hex.resnet import ResNet
+from alpha_hex.alpha0 import MCTS
 
 
 hexgame = HexGame()
@@ -20,25 +20,25 @@ args = {
 
 device = ("cuda" if torch.cuda.is_available() else "cpu")
 model = ResNet(hexgame, 12, 128, device)
-model.load_state_dict(torch.load("../../models/model_6.pt"))
+model.load_state_dict(torch.load("../../models/model_7_warius.pt"))
 model.eval()
 
 mcts = MCTS(hexgame, args, model)
 state = hexgame.get_initial_state()
 
-# state = np.array(
-#     [[0, 0, 0, 0, 0, 0, -1, 0, -1, -1, 0],
-#      [0, 0, 0, 0, 0, 1, -1, 1, 1, 0, 0],
-#      [0, 0, 0, 0, 0, 1, 1, -1, 1, -1, 0],
-#      [-1, 0, 0, 0, 0, -1, -1, -1, 1, 0, 0],
-#      [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
-#      [0, 0, 0, 0, 1, -1, -1, 0, 0, 0, 0],
-#      [0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0],
-#      [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-#      [0, 0, -1, 1, 1, 0, 0, 0, 0, 0, 0],
-#      [0, 0, -1, -1, 1, 0, 0, 0, 0, 0, 0],
-#      [0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0]]
-# )
+state = np.array(
+    [[0, 0, 0, 0, 0, 0, -1, 0, -1, -1, 0],
+     [0, 0, 0, 0, 0, 1, -1, 1, 1, 0, 0],
+     [0, 0, 0, 0, 0, 1, 1, -1, 1, -1, 0],
+     [-1, 0, 0, 0, 0, -1, -1, -1, 1, 0, 0],
+     [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+     [0, 0, 0, 0, 1, -1, -1, 0, 0, 0, 0],
+     [0, 0, 0, 1, -1, 0, 0, 0, 0, 0, 0],
+     [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+     [0, 0, -1, 0, 1, 0, 0, 0, 0, 0, 0],
+     [0, 0, -1, -1, 1, 0, 0, 0, 0, 0, 0],
+     [0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0]]
+)
 
 move_history = []
 
