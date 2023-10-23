@@ -9,3 +9,4 @@ This package provides:
 - [AlphaZero from scratch by Robert Förster](https://www.youtube.com/watch?v=wuSQpLinRB4&t=23&ab_channel=freeCodeCamp.org)
 - [Hex Game Wikipedia](https://en.wikipedia.org/wiki/Hex_(board_game))
 - [Hex Game Demo](https://www.lutanho.net/play/hex.html)
+- [Policy improvment with Gumbel](https://openreview.net/pdf?id=bERaNdoegnO) 
