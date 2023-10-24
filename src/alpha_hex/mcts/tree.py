@@ -53,6 +53,9 @@ class Tree:
     children_discoutns: jnp.ndarray
     # [B, N, ...]
     states: jnp.ndarray
+    # [B, A]
+    root_invalid_actions: jnp.ndarray
+    root_gumbel: jnp.ndarray
 
     # Class Constants
     ROOT_INDEX = ClassVar[int] = 0
